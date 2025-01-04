@@ -1,5 +1,5 @@
 const { Investor } = require("../models/investorModel");
-const { User } = require("../modules/user/userModel");
+const { User } = require("../../auth/models/userModel");
 const { validateUserCredentials } = require("../../../utils/validations");
 
 

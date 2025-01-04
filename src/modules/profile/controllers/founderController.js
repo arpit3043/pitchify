@@ -1,5 +1,6 @@
 const { Founder } = require("../models/founderModel");
 const { User } = require("../../auth/models/userModel");
+
 const { validateUserCredentials } = require("../../../utils/validations");
 
 const registerfounder = async (req, res, next) => {

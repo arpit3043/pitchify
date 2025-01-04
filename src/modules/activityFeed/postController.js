@@ -1,6 +1,6 @@
-const { Post } = require("../modules/activityFeed/postModel");
-const { User } = require("../modules/user/userModel");
-const { Comment } = require("../models/commentModel");
+const { Post } = require("../activityFeed/postModel");
+const { User } = require("../auth/models/userModel");
+const { Comment } = require("./commentModel");
 
 const createPost = async (req, res, next) => {
   try {
