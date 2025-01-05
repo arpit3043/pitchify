@@ -8,7 +8,7 @@ const FounderSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
-    startUpName: { trpe: String },
+    startUpName: { type: String },
     businessIdea: {
       problemStatement: { type: String },
       uniqueValueProposition: { type: String },
