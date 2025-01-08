@@ -38,5 +38,5 @@ module.exports = {
   validateUserCredentials,
   validateEmail,
   validatePassword,
-  //validateName
+  validateName
 }; 
