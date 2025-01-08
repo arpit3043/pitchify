@@ -6,7 +6,7 @@ const router = express.Router();
 
 // router.route("/login").post(loginUser);
 
-router.route("/register").post(founderController.registerfounder);
+router.route("/register").post(founderController.registerFounder);
 router.route("/login").post(founderController.loginFounder);
 router.route("/logout").post(founderController.logoutFounder);
 
