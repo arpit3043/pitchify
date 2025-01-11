@@ -2,13 +2,16 @@ const { Post } = require("../models/postModel");
 const { User } = require("../../auth/models/userModel");
 const { Comment } = require("../models/commentModel");
 const cloudinary=require('../../../utils/cloudinary')
+const { extractHashtags } = require("../../../utils/trendingTopicsHelper");
 
 /*
 Route to create a post along with file upload if any.
 */
 const createPost = async (req, res, next) => {
   try {
-    const { author,content,hashtags }=req.body;
+    const author = req.user._id;
+    const { content } = req.body;
+    const hashtags = extractHashtags(content);
     const user= await User.findById(author);
     if(!user){
       return res.status(404).json({success:false,message:"User Not Found.Login Again!"});
@@ -16,7 +19,7 @@ const createPost = async (req, res, next) => {
 
     //first we upload the media to cloudinary for fetching the urls(cloudinary)
     const mediaUrls=[]
-    if(req.files && req.file.lenght>0){
+    if(req.files && req.file.length>0){
       for(const file of req.files){
         const result =await cloudinary.uploader.upload(file.path,{
           folder:'posts_media',
@@ -31,7 +34,7 @@ const createPost = async (req, res, next) => {
       author,
       content,
       media:mediaUrls,
-      hashtags:hashtags?hashtags.split(',').map(tag=>tag.trim()):[],
+      hashtags
     });
     await newPost.save();    
     //add post id to the user object who created the post (ordering: latest first)
@@ -194,7 +197,7 @@ const updatePostCaption = async (req, res, next) => {
     }
 
     //unauthorized user accessing the post
-    if (post.owner.toString() !== req.user._id.toString()) {
+    if (post.author.toString() !== req.user._id.toString()) {
       return res.status(401).json({
         success: false,
         message: "Unauthorized to Update",

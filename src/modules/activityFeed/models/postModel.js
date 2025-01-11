@@ -1,62 +1,62 @@
 const mongoose = require("mongoose");
 
-const PostSchema=new mongoose.Schema(
+const PostSchema = new mongoose.Schema(
   {
-    author:{
-      type:mongoose.Schema.Types.ObjectId,
-      ref:'User',
-      required:true
+    author: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
-    content:{
-      type:String,
-      required:true,
-      trim:true,
+    content: {
+      type: String,
+      required: true,
+      trim: true,
     },
-    media:[
+    media: [
       {
-      type:String,//basic url to path of the media
-      required:false,
+        type: String, //basic url to path of the media
+        required: false,
       },
     ],
-    likes:[
+    likes: [
       {
-        type:mongoose.Schema.Types.ObjectId, //basic list of user ids
-        ref: 'User',
-      }
+        type: mongoose.Schema.Types.ObjectId, //basic list of user ids
+        ref: "User",
+      },
     ],
-    hashtags:[
+    hashtags: [
       {
-        type:String,
-        required:true,
-      }
+        type: String,
+        required: true,
+      },
     ],
-    shares: 
-    {
+    shares: {
       type: Number,
-      default: 0
+      default: 0,
     },
-    comments:[
+    comments: [
       {
-        user:{
-          type:mongoose.Schema.Types.ObjectId,
-          ref:'User',
-          required:true,
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
         },
-        comment:{
-          type:String,
-          required:true
+        comment: {
+          type: String,
+          required: true,
         },
-        timestamp:{
-          type:Date,
-          default:Date.now
-        }
-      }
-    ]
-  },{
-    timestamps:true //for auto adding of updated and created fields in db
+        timestamp: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+  },
+  {
+    timestamps: true, //for auto adding of updated and created fields in db
   }
 );
 
 // PostSchema.index({author:1});
-
-module.exports=mongoose.model('Post',PostSchema);
+const Post = mongoose.model("Post", PostSchema);
+module.exports = { Post };
