@@ -1,17 +1,22 @@
 const express = require("express");
 const postController = require("../controllers/postController");
 const { isAuthenticated } = require("../../../middlewares/auth");
+const upload=require('../../../utils/multer');
 const router = express.Router();
 
 router
   .route("/post/createPost")
-  .post(isAuthenticated, postController.createPost);
+  .post(isAuthenticated,upload.array('media',5), postController.createPost);
+
+router
+  .route("/post/")
+  .get(isAuthenticated,postController.fetchAllPost);
 
 router
   .route("/post/:id")
-  .get()
+  .get(isAuthenticated,postController.fetchPostById)
   .delete(isAuthenticated, postController.deletePost)
-  .put(isAuthenticated, postController.updatePostCaption);
+  .put(isAuthenticated, postController.updatePostById);
 
 //add comment routes on post
 router

@@ -1,27 +1,44 @@
-const { Post } = require("../modules/activityFeed/postModel");
-const { User } = require("../modules/user/userModel");
+const { Post } = require("../models/Post");
+const { User } = require("../../auth/models/userModel");
 const { Comment } = require("../models/commentModel");
+const cloudinary=require('../../../utils/cloudinary')
 
 const createPost = async (req, res, next) => {
   try {
-    //collect new Post Data in an object
-    const newPostData = {
-      caption: req.body.caption,
-      owner: req.user._id,
-    };
+    const { author,content,hashtags }=req.body;
+    const user= await User.findById(author);
+    if(!user){
+      return res.status(404).json({message:"User Not Found.Login Again!"});
+    }
 
+    //first we upload the media to cloudinary for fetching the urls(cloudinary)
+    const mediaUrls=[]
+    if(req.files && req.file.lenght>0){
+      for(const file of req.files){
+        const result =await cloudinary.uploader.upload(file.path,{
+          folder:'posts_media',
+          resource_type:'auto'
+        });
+        mediaUrls.push(result.secure_url);
+      }
+    }
     //create a new Post
-    const newPost = await Post.create(newPostData);
-
-    const user = await User.findById(req.user._id);
-    //add post id to the user object who created the post
+    // const newPost = await Post.create(newPostData); not using this just for clarity
+    const newPost=new Post({
+      author,
+      content,
+      media:mediaUrls,
+      hashtags:hashtags?hashtags.split(',').map(tag=>tag.trim()):[],
+    });
+    await newPost.save();    
+    //add post id to the user object who created the post (ordering: latest first)
     user.posts.unshift(newPost._id);
     await user.save();
 
     res.status(201).json({
       success: true,
       message: "Post created",
-      newPost,
+      post:newPost,
     });
   } catch (error) {
     res.status(500).json({
@@ -29,6 +46,84 @@ const createPost = async (req, res, next) => {
       message: error.stack,
     });
   }
+};
+
+const fetchAllPost= async(req,res,next)=>{
+    try{
+      const {page=1,limit=10}=req.query;
+      const userId=req.user.id;
+
+      const user=await User.findById(userId);
+      if(!user){
+        return res.status(404).json({message:'User Not Found'});
+      }
+      const following =user.following|| [];
+      //temp logic get the recent posts for all the users this user follows
+      const postPromise=following.map(async (followingId)=>{
+        const followingUser=await User.findById(followingId);
+        if(followingUser && followingUser.posts.length>0){
+          const latestPost=followingUser.posts[0];
+          const post=await Post.findById(latestPost);
+          return post;
+        }
+        return null;
+      });
+
+      const posts=await Promise.all(postPromise);
+      //filtering out all the post=>null if any
+      const validPosts=posts.filter(post=>post !== null);
+      const startIndex=(page-1)*limit;
+      const endIndex=page*limit;
+      const paginatedPosts=validPosts.slice(startIndex,endIndex);
+      return res.status(200).json({
+        posts:paginatedPosts,
+        pagination:{
+          currentPage:page,
+          totalPosts:validPosts.length,
+          totalPages:Math.ceil(validPosts.length/limit),
+        },
+      });
+    }catch(error){
+      res.status(500).json({message:'Internal Server Error'});
+    }
+};
+
+const fetchPostById= async(req,res,next)=>{
+  try{
+    const post=await Post.findById(req.params.id);
+    if(!post){
+      return res.status(404).json({message:'Post Not Found'});
+    }
+
+    return res.status(200).json({
+      message:'Post retrieval Success',
+      post:post
+    });
+  }catch(error){
+    res.status(500).json({message:'Internal Server Error',error:error.message});
+  }
+
+};
+
+const updatePostById=async(req,res,next)=>{
+    try{
+      const updatesForPost=req.body;
+      const post=await Post.findByIdAndUpdate(
+        req.params.id,
+        {$set:updatesForPost},
+        {new:true,runValidators:true}
+      );
+      if(!post){
+        return res.status(404).json({message:'Post Not Found'});
+      }
+
+      return res.status(200).json({
+        message:'Post Update Successfully',
+        post:post,
+      });
+    }catch(error){
+      res.status(500).json({message:'Internal Server Error',error:error.message});
+    }
 };
 
 const deletePost = async (req, res, next) => {
@@ -41,7 +136,7 @@ const deletePost = async (req, res, next) => {
       });
     }
 
-    if (post.owner.toString() !== req.user._id.toString()) {
+    if (post.author.toString() !== req.user._id.toString()) {
       return res.status(401).json({
         success: false,
         message: "Unauthorized",
@@ -280,4 +375,7 @@ module.exports = {
   commentOnPost,
   deleteComment,
   updateCommentOnPost,
+  fetchAllPost,
+  fetchPostById,
+  updatePostById,
 };
