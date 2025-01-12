@@ -273,6 +273,52 @@ const updateCommentOnPost = async (req, res, next) => {
   }
 };
 
+const getPostComments = async (req, res, next) => {
+  try {
+    const { postId } = req.params;
+    // Fetch comments with pagination
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: "Post not found"
+      });
+    }
+
+    const comments = await Comment.find({ postId })
+      .populate('owner', 'name') // Populate author details (e.g., name)
+      .sort({ createdAt: -1 }) // Sort comments by creation date in descending order
+      .skip(skip) // Skip the first 'skip' comments
+      .limit(limit); // Limit the number of comments to 'limit'
+
+    const totalComments = await Comment.countDocuments({ postId });
+    const totalPages = Math.ceil(totalComments / limit);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        comments,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalComments,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1
+        }
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 module.exports = {
   createPost,
   deletePost,
@@ -280,4 +326,5 @@ module.exports = {
   commentOnPost,
   deleteComment,
   updateCommentOnPost,
+  getPostComments,
 };
