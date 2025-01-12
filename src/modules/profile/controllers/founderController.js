@@ -3,7 +3,7 @@ const { User } = require("../../auth/models/userModel");
 
 const { validateUserCredentials } = require("../../../utils/validations");
 
-const registerFounder = async (req, res, next) => {
+const registerfounder = async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
     
@@ -78,7 +78,7 @@ const loginFounder = async (req, res, next) => {
     if (!user) {
       res.status(401).json({
         success: false,
-        message: "User does not exist",
+        message: "User doesnot exist",
       });
     }
 
@@ -195,4 +195,4 @@ const followUser = async (req, res, next) => {
   }
 };
 
-module.exports = { registerFounder, loginFounder, logoutFounder, followUser };
+module.exports = { registerfounder, loginFounder, logoutFounder, followUser };

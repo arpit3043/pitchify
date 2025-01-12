@@ -10,9 +10,6 @@ const routes = require("./routes.js");
 
 const port = process.env.PORT || 8000;
 
-// Verify MONGO_URI is loaded
-console.log('MONGO_URI:', process.env.MONGO_URI); // For debugging
-
 connectToDB();
 const app = express();
 

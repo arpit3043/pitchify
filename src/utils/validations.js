@@ -9,16 +9,16 @@ const validatePassword = (password) => {
   return passwordRegex.test(password);
 };
 
-const validateName = (name) => {
-  return name && name.length >= 2 && name.length <= 50;
-};
+// const validateName = (name) => {
+//   return name && name.length >= 2 && name.length <= 50;
+// };
 
 const validateUserCredentials = (userData) => {
   const errors = [];
 
-  if (!validateName(userData.name)) {
-    errors.push('Name must be between 2 and 50 characters');
-  }
+//   if (!validateName(userData.name)) {
+//     errors.push('Name must be between 2 and 50 characters');
+//   }
 
   if (!validateEmail(userData.email)) {
     errors.push('Invalid email format');
@@ -38,5 +38,5 @@ module.exports = {
   validateUserCredentials,
   validateEmail,
   validatePassword,
-  validateName
+  //validateName
 }; 

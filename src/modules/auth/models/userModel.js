@@ -7,17 +7,11 @@ const userSchema = mongoose.Schema(
     name: {
       type: String,
       required: true,
-      trim: true,
-      maxLength: [25, "Name too large"],
-      match: /^[a-zA-Z]+$/,
     },
     email: {
       type: String,
       required: true,
       unique: true,
-      match: [/^\S+@\S+\.\S+$/, "Please enter a valid email"],
-      lowercase: true,
-      trim: true,
     },
     password: {
       type: String,
@@ -25,16 +19,8 @@ const userSchema = mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["founder", "investor", "enthusiast"],
+      enum: ["Founder", "Investor"],
       required: true,
-    },
-    bio: {
-      type: String,
-      default: "",
-    },
-    profilePicture: {
-      type: String,
-      default: "",
     },
     posts: [
       {
@@ -59,8 +45,6 @@ const userSchema = mongoose.Schema(
     timestamps: true,
   }
 );
-
-userSchema.index({ email: 1 });
 
 userSchema.pre("save", async function (next) {
   if (this.isModified("password")) {
