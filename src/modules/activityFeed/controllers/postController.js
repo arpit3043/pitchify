@@ -3,6 +3,9 @@ const { User } = require("../../auth/models/userModel");
 const { Comment } = require("../models/commentModel");
 const cloudinary=require('../../../utils/cloudinary')
 
+/*
+Route to create a post along with file upload if any.
+*/
 const createPost = async (req, res, next) => {
   try {
     const { author,content,hashtags }=req.body;
@@ -48,6 +51,10 @@ const createPost = async (req, res, next) => {
   }
 };
 
+/*
+Route to fetch all the posts for the activity feed of any user.
+For now the latest posts of it's followings are fetched.
+*/
 const fetchAllPost= async(req,res,next)=>{
     try{
       const {page=1,limit=10}=req.query;
@@ -88,6 +95,9 @@ const fetchAllPost= async(req,res,next)=>{
     }
 };
 
+/*
+Route to fetch a user post for a provided post id.
+*/
 const fetchPostById= async(req,res,next)=>{
   try{
     const post=await Post.findById(req.params.id);
@@ -105,6 +115,10 @@ const fetchPostById= async(req,res,next)=>{
 
 };
 
+
+/*
+Route to update a user post for a provided post id.
+*/
 const updatePostById=async(req,res,next)=>{
     try{
       const updatesForPost=req.body;
