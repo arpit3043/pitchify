@@ -1,22 +1,22 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
-dotenv.config();
+const postRoutes=require("../modules/activityFeed/routes/postRoutes.js")
+// Load env vars - move this to top
+dotenv.config({ path: "./.env" });
+
 const { connectToDB } = require("../utils/db.js");
 const routes = require("./routes.js");
-const postRoutes=require("../modules/activityFeed/routes/postRoutes.js")
-// import { errorHandler, notFound } from "./middleware/errorMiddleware.js";
 
 const port = process.env.PORT || 8000;
+
+// Verify MONGO_URI is loaded
+console.log('MONGO_URI:', process.env.MONGO_URI); // For debugging
 
 connectToDB();
 const app = express();
 
-if (process.env.NODE_ENV !== "production") {
-  dotenv.config({ path: "backend/config/config.env" });
-}
-
-app.use(express.json()); // To parse JSON bodies
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 

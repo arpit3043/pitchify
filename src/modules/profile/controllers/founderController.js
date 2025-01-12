@@ -1,9 +1,23 @@
 const { Founder } = require("../models/founderModel");
 const { User } = require("../../auth/models/userModel");
 
-const registerfounder = async (req, res, next) => {
+const { validateUserCredentials } = require("../../../utils/validations");
+
+const registerFounder = async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
+    
+    // Validate user input
+    const validation = validateUserCredentials({ name, email, password });
+    if (!validation.isValid) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: validation.errors
+      });
+    }
+
+    // Check if user already exists
     let user = await User.findOne({ email });
     if (user) {
       return res.status(404).json({
@@ -12,6 +26,7 @@ const registerfounder = async (req, res, next) => {
       });
     }
 
+    // Create user with validated data
     user = await User.create({
       name,
       email,
@@ -30,7 +45,7 @@ const registerfounder = async (req, res, next) => {
       httpOnly: true,
     };
 
-    res.status(200).cookie("token", token, options).json({
+    res.status(201).cookie("token", token, options).json({
       success: true,
       message: "Founder registered successfully",
       token: token,
@@ -63,7 +78,7 @@ const loginFounder = async (req, res, next) => {
     if (!user) {
       res.status(401).json({
         success: false,
-        message: "User doesnot exist",
+        message: "User does not exist",
       });
     }
 
@@ -180,4 +195,4 @@ const followUser = async (req, res, next) => {
   }
 };
 
-module.exports = { registerfounder, loginFounder, logoutFounder, followUser };
+module.exports = { registerFounder, loginFounder, logoutFounder, followUser };

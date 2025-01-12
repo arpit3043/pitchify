@@ -1,9 +1,24 @@
 const { Investor } = require("../models/investorModel");
-const { User } = require("../modules/user/userModel");
+const { User } = require("../../auth/models/userModel");
+const { validateUserCredentials } = require("../../../utils/validations");
+
 
 const registerInvestor = async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
+
+    // Validate user input
+    const validation = validateUserCredentials({ name, email, password });
+    if (!validation.isValid) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: validation.errors
+      });
+    }
+    
+    // Check if user already exists
+
     let user = await User.findOne({ email });
     if (user) {
       return res.status(404).json({
