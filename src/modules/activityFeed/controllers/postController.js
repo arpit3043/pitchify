@@ -1,4 +1,4 @@
-const { Post } = require("../models/Post");
+const { Post } = require("../models/postModel");
 const { User } = require("../../auth/models/userModel");
 const { Comment } = require("../models/commentModel");
 const cloudinary=require('../../../utils/cloudinary')
