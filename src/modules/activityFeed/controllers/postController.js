@@ -143,16 +143,25 @@ Route to update a user post for a provided post id.
 const updatePostById = async (req, res, next) => {
   try {
     const updatesForPost = req.body;
-    const post = await Post.findByIdAndUpdate(
-      req.params.id,
-      { $set: updatesForPost },
-      { new: true, runValidators: true }
-    );
-    if (!post) {
+    const existingPost = await Post.findById(req.params.id);
+    if (!existingPost) {
       return res
         .status(404)
         .json({ success: false, message: "Post Not Found" });
     }
+    const oldHashtags = extractHashtags(existingPost.content || "");
+    const post = await Post.findByIdAndUpdate(
+      req.params.id,
+      {
+        $set: {
+          ...updatesForPost,
+          hashtags: extractHashtags(updatesForPost.content) || oldHashtags,
+        },
+      },
+      { new: true, runValidators: true }
+    );
+    const newHashtags = extractHashtags(updatesForPost.content || "");
+    await updateTrendingTopics(oldHashtags, newHashtags);
 
     return res.status(200).json({
       success: true,
@@ -330,7 +339,7 @@ const deleteComment = async (req, res, next) => {
     if (!comment.owner.equals(userId) && !post.owner.equals(userId)) {
       return res.status(403).json({
         success: false,
-        message: "Not authorized to delete the comment",
+        message: "Not authorised to delete the comment",
       });
     }
 
@@ -386,7 +395,7 @@ const updateCommentOnPost = async (req, res, next) => {
     if (!comment.owner.equals(userId)) {
       return res.status(403).json({
         success: false,
-        message: "Not authorized to update the comment",
+        message: "Not authorised to update the comment",
       });
     }
 

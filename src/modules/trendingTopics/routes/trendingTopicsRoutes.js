@@ -1,9 +1,11 @@
 const express = require("express");
-const trendingTopics = require("../controllers/trendingTopicsController");
+const trendingTopicsController = require("../controllers/trendingTopicsController.js");
 const { isAuthenticated } = require("../../../middlewares/auth");
 
 const router = express.Router();
 
-router.route("/").post(isAuthenticated, trendingTopics.trending);
+router
+  .route("/")
+  .get(isAuthenticated, trendingTopicsController.trending);
 
 module.exports = router;
