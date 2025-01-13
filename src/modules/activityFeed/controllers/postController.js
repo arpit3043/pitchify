@@ -11,7 +11,7 @@ const createPost = async (req, res, next) => {
     const { author,content,hashtags }=req.body;
     const user= await User.findById(author);
     if(!user){
-      return res.status(404).json({message:"User Not Found.Login Again!"});
+      return res.status(404).json({success:false,message:"User Not Found.Login Again!"});
     }
 
     //first we upload the media to cloudinary for fetching the urls(cloudinary)
@@ -62,7 +62,10 @@ const fetchAllPost= async(req,res,next)=>{
 
       const user=await User.findById(userId);
       if(!user){
-        return res.status(404).json({message:'User Not Found'});
+        return res.status(404).json({
+          success:false,
+          message:'User Not Found'
+        });
       }
       const following =user.following|| [];
       //temp logic get the recent posts for all the users this user follows
@@ -83,6 +86,7 @@ const fetchAllPost= async(req,res,next)=>{
       const endIndex=page*limit;
       const paginatedPosts=validPosts.slice(startIndex,endIndex);
       return res.status(200).json({
+        success:true,
         posts:paginatedPosts,
         pagination:{
           currentPage:page,
@@ -91,7 +95,7 @@ const fetchAllPost= async(req,res,next)=>{
         },
       });
     }catch(error){
-      res.status(500).json({message:'Internal Server Error'});
+      res.status(500).json({success:false,message:'Internal Server Error'});
     }
 };
 
@@ -102,15 +106,16 @@ const fetchPostById= async(req,res,next)=>{
   try{
     const post=await Post.findById(req.params.id);
     if(!post){
-      return res.status(404).json({message:'Post Not Found'});
+      return res.status(404).json({success:false,message:'Post Not Found'});
     }
 
     return res.status(200).json({
+      success:true,
       message:'Post retrieval Success',
       post:post
     });
   }catch(error){
-    res.status(500).json({message:'Internal Server Error',error:error.message});
+    res.status(500).json({success:false,message:'Internal Server Error'});
   }
 
 };
@@ -128,15 +133,16 @@ const updatePostById=async(req,res,next)=>{
         {new:true,runValidators:true}
       );
       if(!post){
-        return res.status(404).json({message:'Post Not Found'});
+        return res.status(404).json({success:false,message:'Post Not Found'});
       }
 
       return res.status(200).json({
+        success:true,
         message:'Post Update Successfully',
         post:post,
       });
     }catch(error){
-      res.status(500).json({message:'Internal Server Error',error:error.message});
+      res.status(500).json({success:false,message:'Internal Server Error'});
     }
 };
 
