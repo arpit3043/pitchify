@@ -18,6 +18,10 @@ router
   .delete(isAuthenticated, postController.deletePost)
   .put(isAuthenticated, postController.updatePostById);
 
+router
+  .route("/:id/edit")
+  .patch(isAuthenticated, postController.updatePostCaption);
+
 //add comment routes on post
 router
   .route("/post/:postId/comments")
