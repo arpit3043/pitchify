@@ -6,9 +6,9 @@ const FounderSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "User"
     },
-    startUpName: { trpe: String },
+    startUpName: { type: String },
     businessIdea: {
       problemStatement: { type: String },
       uniqueValueProposition: { type: String },
