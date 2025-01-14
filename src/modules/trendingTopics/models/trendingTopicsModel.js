@@ -3,7 +3,10 @@ const trendingSchema = new mongoose.Schema(
   {
     hashtag: { type: String, required: true, unique: true },
     postCount: { type: Number, default: 0 },
-    postIds: { type: [mongoose.Schema.Types.ObjectId], default: [] },
+    postIds: [{
+      postId: { type: mongoose.Schema.Types.ObjectId, required: true },
+      createdAt: { type: Date, default: Date.now },}
+    ],
   },
   { timeseries: true }
 );

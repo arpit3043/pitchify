@@ -16,7 +16,7 @@ export const updateTrendingTopics = async (hashtag, postId) => {
         { hashtag },
         {
           $inc: { postCount: 1 },
-          $addToSet: { postIds: postId },
+          $addToSet: { postIds: { postId, createdAt: new Date() } },
           $set: { updatedAt: new Date() },
         }
       );
@@ -25,7 +25,7 @@ export const updateTrendingTopics = async (hashtag, postId) => {
       const newTrendingTopic = new TrendingTopic({
         hashtag,
         postCount: 1,
-        postIds: [postId],
+        postIds: [{ postId, createdAt: new Date() }],
       });
       await newTrendingTopic.save();
     }
@@ -36,10 +36,11 @@ export const updateTrendingTopics = async (hashtag, postId) => {
 
 export const handlePostDeletion = async (postId, hashtags) => {
   for (const hashtag of hashtags) {
+    // Remove the specific postId entry
     await TrendingTopic.updateOne(
       { hashtag },
       {
-        $pull: { postIds: postId },
+        $pull: { postIds: { postId } },
         $inc: { postCount: -1 },
       }
     );
@@ -59,5 +60,35 @@ export const handlePostUpdate = async (postId, oldHashtags, newHashtags) => {
   // Add new hashtags
   for (const hashtag of newHashtags) {
     await updateTrendingTopics(hashtag, postId);
+  }
+};
+
+export const cleanUpTrendingTopics = async () => {
+  try {
+    // Calculate timestamp for 3 days ago
+    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+
+    // Find and update trending topics
+    const trendingTopics = await TrendingTopic.find();
+    for (const topic of trendingTopics) {
+      // Filter out posts older than 3 days
+      topic.postIds = topic.postIds.filter(
+        (post) => post.createdAt > threeDaysAgo
+      );
+
+      // Update post count based on the filtered postIds array
+      topic.postCount = topic.postIds.length;
+
+      // If no posts remain for this hashtag, delete the trending topic
+      if (topic.postCount === 0) {
+        await topic.deleteOne();
+      } else {
+        await topic.save();
+      }
+    }
+
+    console.log("Trending topics cleaned up successfully");
+  } catch (error) {
+    console.error("Error during trending topics cleanup:", error.message);
   }
 };
