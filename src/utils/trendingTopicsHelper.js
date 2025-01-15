@@ -66,6 +66,7 @@ export const handlePostUpdate = async (postId, oldHashtags, newHashtags) => {
 export const cleanUpTrendingTopics = async () => {
   try {
     // Calculate timestamp for 3 days ago
+    // if you want to check add 60 * 1000 to remove after 1 hour
     const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
 
     // Find and update trending topics
