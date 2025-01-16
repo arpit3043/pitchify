@@ -29,4 +29,15 @@ router
   .put(isAuthenticated, postController.updateCommentOnPost)
   .delete(isAuthenticated, postController.deleteComment);
 
+
+  // Comment Interaction
+// Handles liking/unliking comments
+router.post(
+  "/post/:postId/comments/:commentId/like",
+  isAuthenticated,
+  postController.likeComment
+);
+
 module.exports = router;
+
+
