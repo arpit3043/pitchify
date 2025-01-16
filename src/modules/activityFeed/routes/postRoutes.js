@@ -16,6 +16,7 @@ router
 //add comment routes on post
 router
   .route("/post/:postId/comments")
+  .get(isAuthenticated, postController.getPostComments)
   .post(isAuthenticated, postController.commentOnPost);
 
 router

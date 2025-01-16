@@ -5,7 +5,7 @@ const isAuthenticated = async (req, res, next) => {
   try {
     //extract the token from the cookies
     const { token } = req.cookies;
-    console.log(token);
+    // console.log(token);
     if (!token) {
       return res.status(401).json({
         success: false,
@@ -15,7 +15,7 @@ const isAuthenticated = async (req, res, next) => {
 
     const decodedToken = await jwt.verify(token, process.env.SECRET_KEY);
 
-    console.log(decodedToken);
+    // console.log(decodedToken);
 
     req.user = await User.findById(decodedToken.id);
     next();
@@ -27,4 +27,27 @@ const isAuthenticated = async (req, res, next) => {
   }
 };
 
-module.exports = { isAuthenticated };
+const isRole = (role) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Please login first"
+      });
+    }
+
+    if (req.user.role !== role) {
+      return res.status(403).json({
+        success: false,
+        message: `Only ${role}s can access this resource`
+      });
+    }
+
+    next();
+  };
+};
+
+module.exports = { 
+  isAuthenticated,
+  isRole 
+};
