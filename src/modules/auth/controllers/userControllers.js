@@ -108,7 +108,6 @@ const registerUser = async (req, res, next) => {
             message: "Email already in use for a founder or an investor",
           });
         }
-        // console.log("hello" + name, email, password);
         
         // Create user with validated data
         user = await User.create({
