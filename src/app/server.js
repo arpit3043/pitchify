@@ -3,6 +3,7 @@ const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 const cors = require('cors');
 
+const postRoutes=require("../modules/activityFeed/routes/postRoutes.js")
 // Load env vars - move this to top
 dotenv.config({ path: "./.env" });
 
@@ -26,6 +27,10 @@ app.use(cors({
 }));
 
 app.use("/api", routes);
+app.use("/api/", postRoutes);
+
+// app.use(notFound);
+// app.use(errorHandler);
 
 app.use((err, req, res, next) => {
     console.error(err.stack);
