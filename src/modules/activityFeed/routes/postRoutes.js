@@ -23,6 +23,7 @@ router
 //add comment routes on post
 router
   .route("/post/:postId/comments")
+  .get(isAuthenticated, postController.getPostComments)
   .post(isAuthenticated, postController.commentOnPost);
 
 router
@@ -30,4 +31,15 @@ router
   .put(isAuthenticated, postController.updateCommentOnPost)
   .delete(isAuthenticated, postController.deleteComment);
 
+
+  // Comment Interaction
+// Handles liking/unliking comments
+router.post(
+  "/post/:postId/comments/:commentId/like",
+  isAuthenticated,
+  postController.likeComment
+);
+
 module.exports = router;
+
+
