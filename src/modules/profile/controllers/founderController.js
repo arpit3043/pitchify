@@ -1,8 +1,8 @@
 const { Founder } = require("../models/founderModel");
 const { User } = require("../../auth/models/userModel");
-
 const { validateFounderProfile } = require("../../../utils/validations");
 const { cloudinary } = require('../../../utils/uploadConfig');
+const {validationMessage} = require("../../../utils/messages");
 
 const registerFounder = async (req, res) => {
   try {
@@ -10,7 +10,7 @@ const registerFounder = async (req, res) => {
     if (!validation.isValid) {
       return res.status(400).json({
         success: false,
-        message: "Validation failed",
+        message: validationMessage,
         errors: validation.errors
       });
     }
