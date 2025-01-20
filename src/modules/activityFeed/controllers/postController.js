@@ -2,12 +2,7 @@ const { Post } = require("../models/postModel");
 const { User } = require("../../auth/models/userModel");
 const { Comment } = require("../models/commentModel");
 const cloudinary = require("../../../utils/cloudinary");
-const {
-  extractHashtags,
-  updateTrendingTopics,
-  handlePostDeletion,
-  handlePostUpdate,
-} = require("../../../utils/trendingTopicsHelper");
+const { extractHashtags, updateTrendingTopics, handlePostDeletion, handlePostUpdate} = require("../../../utils/trendingTopicsHelper");
 
 /*
 Route to create a post along with file upload if any.

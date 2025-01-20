@@ -1,4 +1,4 @@
-import { TrendingTopic } from "../modules/trendingTopics/models/trendingTopicsModel.js";
+const { TrendingTopic } = require("../modules/trendingTopics/models/trendingTopicsModel.js");
 
 export const extractHashtags = (content) => {
   const hashtags = content.match(/#\b[a-zA-Z0-9_]{2,}\b/g) || [];
