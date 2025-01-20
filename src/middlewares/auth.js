@@ -1,5 +1,6 @@
 const { User } = require("../modules/auth/models/userModel");
 const jwt = require("jsonwebtoken");
+const {loginErrorMessage} = require("../utils/messages");
 
 const isAuthenticated = async (req, res, next) => {
   try {
@@ -9,7 +10,7 @@ const isAuthenticated = async (req, res, next) => {
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: "Please login first",
+        message: loginErrorMessage,
       });
     }
 
@@ -32,7 +33,7 @@ const isRole = (role) => {
     if (!req.user) {
       return res.status(401).json({
         success: false,
-        message: "Please login first"
+        message: loginErrorMessage
       });
     }
 
