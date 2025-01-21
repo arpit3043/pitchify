@@ -1,5 +1,6 @@
 const { User } = require("../modules/auth/models/userModel");
 const jwt = require("jsonwebtoken");
+const {loginErrorMessage} = require("../utils/messages");
 
 const isAuthenticated = async (req, res, next) => {
   try {
@@ -9,15 +10,13 @@ const isAuthenticated = async (req, res, next) => {
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: "Please login first",
+        message: loginErrorMessage,
       });
     }
 
     const decodedToken = await jwt.verify(token, process.env.SECRET_KEY);
 
-    // console.log(decodedToken);
-    // add self valiating token to the request
-    req.user = await User.findById(decodedToken.id);
+    req.user = { id: decodedToken.id, role: decodedToken.role };
     next();
   } catch (error) {
     res.status(401).json({
@@ -32,7 +31,7 @@ const isRole = (role) => {
     if (!req.user) {
       return res.status(401).json({
         success: false,
-        message: "Please login first"
+        message: loginErrorMessage
       });
     }
 

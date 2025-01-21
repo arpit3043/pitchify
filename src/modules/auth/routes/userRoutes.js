@@ -3,7 +3,6 @@ const { loginUser, logoutUser, registerUser, viewUser, followUser, unfollowUser 
 const { isAuthenticated } = require("../../../middlewares/auth");
 
 const router = express.Router();
-// console.log("in user routes");
 
 // Public routes
 router.post("/register", registerUser);

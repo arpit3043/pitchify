@@ -16,7 +16,7 @@ const registerInvestor = async (req, res) => {
       });
     }
     
-    const { experience, minAmount, maxAmount, sectors, preferredInvestmentStages, geographicalFocus } = req.body;
+    const { experience, minAmount, maxAmount, sectors, preferredInvestmentStages, geographicalFocus , portfolio} = req.body;
     
     let existingInvestor = await Investor.findOne({ userId: req.user._id });
     if (existingInvestor) {
@@ -43,7 +43,8 @@ const registerInvestor = async (req, res) => {
         sectors,
         preferredInvestmentStages
       },
-      geographicalFocus
+      geographicalFocus,
+      porfolio
     });
     
     res.status(201).json({
