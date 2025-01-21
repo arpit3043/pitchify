@@ -56,9 +56,13 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
+const payload = {
+  role: this.role,
+  id: "enthusiast"
+}
 // generating the token to be saved on the client
 userSchema.methods.generateToken = async function () {
-  return jwt.sign({ id: this._id }, process.env.SECRET_KEY);
+  return jwt.sign(payload, process.env.SECRET_KEY);
 };
 
 userSchema.methods.matchPassword = async function (enteredPassword) {
