@@ -1,11 +1,13 @@
-const { TrendingTopic } = require("../modules/trendingTopics/models/trendingTopicsModel.js");
+const {
+  TrendingTopic,
+} = require("../modules/trendingTopics/models/trendingTopicsModel.js");
 
-export const extractHashtags = (content) => {
+const extractHashtags = (content) => {
   const hashtags = content.match(/#\b[a-zA-Z0-9_]{2,}\b/g) || [];
   return [...new Set(hashtags.map((tag) => tag.toLowerCase()))];
 };
 
-export const updateTrendingTopics = async (hashtag, postId) => {
+const updateTrendingTopics = async (hashtag, postId) => {
   try {
     // Check if the hashtag is already in the trending collection
     let trending = await TrendingTopic.findOne({ hashtag });
@@ -34,7 +36,7 @@ export const updateTrendingTopics = async (hashtag, postId) => {
   }
 };
 
-export const handlePostDeletion = async (postId, hashtags) => {
+const handlePostDeletion = async (postId, hashtags) => {
   for (const hashtag of hashtags) {
     // Remove the specific postId entry
     await TrendingTopic.updateOne(
@@ -53,7 +55,7 @@ export const handlePostDeletion = async (postId, hashtags) => {
   }
 };
 
-export const handlePostUpdate = async (postId, oldHashtags, newHashtags) => {
+const handlePostUpdate = async (postId, oldHashtags, newHashtags) => {
   // Remove old hashtags
   await handlePostDeletion(postId, oldHashtags);
 
@@ -63,7 +65,7 @@ export const handlePostUpdate = async (postId, oldHashtags, newHashtags) => {
   }
 };
 
-export const cleanUpTrendingTopics = async () => {
+const cleanUpTrendingTopics = async () => {
   try {
     // Calculate timestamp for 3 days ago
     // if you want to check add 60 * 1000 to remove after 1 hour
@@ -92,4 +94,12 @@ export const cleanUpTrendingTopics = async () => {
   } catch (error) {
     console.error("Error during trending topics cleanup:", error.message);
   }
+};
+
+module.exports = {
+  extractHashtags,
+  updateTrendingTopics,
+  handlePostDeletion,
+  handlePostUpdate,
+  cleanUpTrendingTopics,
 };

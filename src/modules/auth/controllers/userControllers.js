@@ -38,15 +38,13 @@ const loginUser = async (req, res) => {
         sameSite: 'strict',
         expires: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)
       };
-  
-      // Remove password from response
-      user.password = undefined;
-  
+      const { password: _, ...userWithOutPassword } = user.toObject();
+
       res.status(200).cookie("token", token, options).json({
         success: true,
         message: "Logged in successfully",
         token,
-        user
+        user: userWithOutPassword,
       });
     } catch (error) {
       res.status(500).json({
@@ -124,8 +122,6 @@ const registerUser = async (req, res, next) => {
             sameSite: 'strict',
             expires: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)
         };
-        user.password = undefined;
-    
         res.status(201).cookie("token", token, options).json({
           success: true,
           message: "User registered successfully",
