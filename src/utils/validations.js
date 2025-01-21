@@ -104,6 +104,54 @@ const validateFounderProfile = (profileData, update = false) => {
   };
 };
 
+const validateInvestorProfile = (profileData, update = false) => {
+  const errors = [];
+
+  // Validate experience if provided
+  if (profileData.experience !== undefined) {
+    if (typeof profileData.experience !== 'string' || profileData.experience.trim().length === 0) {
+      errors.push('Experience must be a non-empty string');
+    }
+  } else if (!update) {
+    errors.push('Experience is required');
+  }
+
+  // Validate investment preferences if provided
+  if (profileData.investmentPreferences) {
+    if (profileData.investmentPreferences.minAmount !== undefined) {
+      if (profileData.investmentPreferences.minAmount <= 0) {
+        errors.push('Minimum investment amount must be greater than 0');
+      }
+    }
+
+    if (profileData.investmentPreferences.maxAmount !== undefined) {
+      if (profileData.investmentPreferences.maxAmount <= 0) {
+        errors.push('Maximum investment amount must be greater than 0');
+      }
+      if (profileData.investmentPreferences.minAmount && 
+          profileData.investmentPreferences.maxAmount < profileData.investmentPreferences.minAmount) {
+        errors.push('Maximum investment amount must be greater than minimum amount');
+      }
+    }
+
+    if (profileData.investmentPreferences.sectors !== undefined) {
+      if (!Array.isArray(profileData.investmentPreferences.sectors) || 
+          profileData.investmentPreferences.sectors.length === 0) {
+        errors.push('At least one investment sector must be specified');
+      }
+    } else if (!update) {
+      errors.push('Investment sectors are required');
+    }
+  } else if (!update) {
+    errors.push('Investment preferences are required');
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
+
 const validateFiles = (files, type) => {
   const errors = [];
   const maxSizes = {
@@ -146,5 +194,6 @@ module.exports = {
   validateEmail,
   validatePassword,
   validateFounderProfile,
+  validateInvestorProfile,
   validateFiles
 }; 

@@ -27,7 +27,7 @@ app.use(cors({
 }));
 
 app.use("/api", routes);
-app.use("/api/", postRoutes);
+
 
 // app.use(notFound);
 // app.use(errorHandler);

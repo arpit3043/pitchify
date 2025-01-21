@@ -17,7 +17,7 @@ const isAuthenticated = async (req, res, next) => {
     const decodedToken = await jwt.verify(token, process.env.SECRET_KEY);
 
     // console.log(decodedToken);
-
+    // add self valiating token to the request
     req.user = await User.findById(decodedToken.id);
     next();
   } catch (error) {

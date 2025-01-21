@@ -30,6 +30,8 @@ const FounderSchema = new mongoose.Schema(
       amount: { type: Number },
       usagePlan: { type: String }
     },
+    location: {type : String},
+    industry: { type : String},
     projectPortfolio: {
       pitchDeck: FileSchema,
       productDemos: [FileSchema],
