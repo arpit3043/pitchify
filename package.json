@@ -8,6 +8,7 @@
     "server": "nodemon src/app/server.js"
   },
   "author": "Pratyaksh Singh",
+  "type": "commonjs",
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^5.1.1",

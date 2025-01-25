@@ -1,2 +1,4 @@
-export const loginErrorMessage = "Please login first";
-export const validationMessage = "Validation failed"
+const loginErrorMessage = "Please login first";
+const validationMessage = "Validation failed"
+
+module.exports = { loginErrorMessage, validationMessage };
