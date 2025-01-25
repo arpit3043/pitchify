@@ -1,5 +1,6 @@
+const passport = require("passport");
 const { User } = require("../models/userModel");
-const {validateUserCredentials} = require("../../../utils/validations"); 
+const { validateUserCredentials } = require("../../../utils/validations");
 
 const loginUser = async (req, res) => {
     try {
@@ -136,6 +137,58 @@ const registerUser = async (req, res, next) => {
     }
 }   
 
-  module.exports = {loginUser , logoutUser , registerUser}
+// Google OAuth Routes
+const googleOAuthLogin = async (req, res, next) => {
+  passport.authenticate("google", { scope: ["profile", "email"] })(
+    req,
+    res,
+    next
+  );
+};
 
-  
+const googleOAuthCallback = async (req, res, next) => {
+  passport.authenticate(
+    "google",
+    { failureRedirect: "/login", session: false },
+    async (err, user) => {
+      try {
+        if (err || !user) {
+          return res.status(401).json({
+            success: false,
+            message: "Authentication failed",
+          });
+        }
+
+        const token = await user.generateToken();
+        const options = {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "strict",
+          expires: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
+        };
+
+        const { password: _, ...userWithoutPassword } = user.toObject();
+
+        res.status(200).cookie("token", token, options).json({
+          success: true,
+          message: "Google OAuth successful",
+          token,
+          user: userWithoutPassword,
+        });
+      } catch (error) {
+        res.status(500).json({
+          success: false,
+          message: error.message,
+        });
+      }
+    }
+  )(req, res, next);
+};
+
+module.exports = {
+  loginUser,
+  logoutUser,
+  registerUser,
+  googleOAuthLogin,
+  googleOAuthCallback,
+};

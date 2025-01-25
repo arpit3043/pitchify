@@ -9,12 +9,15 @@ dotenv.config({ path: "./.env" });
 
 const { connectToDB } = require("../utils/db.js");
 const routes = require("./routes.js");
+const passport = require("passport");
+require("../utils/passportGoogle.js"); 
 
 const port = process.env.PORT || 8000;
 
 connectToDB();
 const app = express();
 
+app.use(passport.initialize());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
