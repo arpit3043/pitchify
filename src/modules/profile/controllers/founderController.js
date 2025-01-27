@@ -463,4 +463,27 @@ const uploadMultimedia = async (req, res) => {
   }
 };
 
-module.exports = { registerFounder, getFounderProfile, updateFounderProfile, deleteFounderProfile, followUser, uploadPitchDeck, uploadProductDemos, uploadMultimedia };
+const createFounderProfile = async (req, res) => {
+  try {
+    const founder = new Founder({
+      userId: req.body.userId,
+      startUpName: req.body.startUpName,
+      businessIdea: req.body.businessIdea,
+      traction: req.body.traction,
+      fundingNeeds: req.body.fundingNeeds,
+      projectPortfolio: req.body.projectPortfolio,
+      milestoneTracker: req.body.milestoneTracker
+    });
+
+    await founder.save();
+    return res.status(201).json(founder);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Error creating profile" });
+  }
+};
+
+
+
+
+module.exports = { createFounderProfile, registerFounder, getFounderProfile, updateFounderProfile, deleteFounderProfile, followUser, uploadPitchDeck, uploadProductDemos, uploadMultimedia };

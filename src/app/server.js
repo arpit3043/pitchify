@@ -1,44 +1,51 @@
 const express = require("express");
-const dotenv = require("dotenv");
-const cookieParser = require("cookie-parser");
-const cors = require('cors');
+const founderController = require("../controllers/founderController");
+const { isAuthenticated, isRole } = require("../../../middlewares/auth");
+const handleFileUpload = require("../../../middlewares/fileUpload");
 
-const postRoutes=require("../modules/activityFeed/routes/postRoutes.js")
-// Load env vars - move this to top
-dotenv.config({ path: "./.env" });
+const router = express.Router();
 
-const { connectToDB } = require("../utils/db.js");
-const routes = require("./routes.js");
+// Protected routes
+router.use(isAuthenticated); // Apply authentication to all routes below
 
-const port = process.env.PORT || 8000;
+// Create a new founder profile
+router.post("/", founderController.createFounderProfile);
 
-connectToDB();
-const app = express();
+// Get a founder profile by userId
+router.get("/:id", founderController.getFounderProfile);
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
+// Update a founder profile
+router.put("/:id", isRole("founder"), founderController.updateFounderProfile);
 
-app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
+// Delete a founder profile
+router.delete("/:id", isRole("founder"), founderController.deleteFounderProfile);
 
-app.use("/api", routes);
-app.use("/api/", postRoutes);
+// File upload routes
 
-// app.use(notFound);
-// app.use(errorHandler);
+// Upload pitch deck
+router.post(
+  "/:id/upload/pitch-deck",
+  isRole("founder"),
+  handleFileUpload.single("pitchDeck"),
+  founderController.uploadPitchDeck
+);
 
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({
-        success: false,
-        message: 'Internal Server Error',
-        error: process.env.NODE_ENV === 'development' ? err.message : undefined
-    });
-});
+// Upload product demos (up to 3 files)
+router.post(
+  "/:id/upload/product-demos",
+  isRole("founder"),
+  handleFileUpload.array("productDemos", 3),
+  founderController.uploadProductDemos
+);
 
-app.listen(port, () => console.log(`server running on ${port}`));
+// Upload multimedia (up to 5 files)
+router.post(
+  "/:id/upload/multimedia",
+  isRole("founder"),
+  handleFileUpload.array("multimedia", 5),
+  founderController.uploadMultimedia
+);
+
+// router.route("/follow/:id").post(isAuthenticated, founderController.followUser);
+
+module.exports = router;

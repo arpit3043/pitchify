@@ -7,19 +7,22 @@ const router = express.Router();
 
 // Protected routes
 router.use(isAuthenticated); // Apply authentication to all routes below
-// Create founder profile
-router.post("/", founderController.registerFounder);
 
-// Get founder profile by ID
+// Create a new founder profile
+router.post("/", founderController.createFounderProfile);
+
+// Get a founder profile by userId
 router.get("/:id", founderController.getFounderProfile);
 
-// Update founder profile
+// Update a founder profile
 router.put("/:id", isRole("founder"), founderController.updateFounderProfile);
 
-// Delete founder profile
+// Delete a founder profile
 router.delete("/:id", isRole("founder"), founderController.deleteFounderProfile);
 
 // File upload routes
+
+// Upload pitch deck
 router.post(
   "/:id/upload/pitch-deck",
   isRole("founder"),
@@ -27,6 +30,7 @@ router.post(
   founderController.uploadPitchDeck
 );
 
+// Upload product demos (up to 3 files)
 router.post(
   "/:id/upload/product-demos",
   isRole("founder"),
@@ -34,6 +38,7 @@ router.post(
   founderController.uploadProductDemos
 );
 
+// Upload multimedia (up to 5 files)
 router.post(
   "/:id/upload/multimedia",
   isRole("founder"),
@@ -43,4 +48,4 @@ router.post(
 
 // router.route("/follow/:id").post(isAuthenticated, founderController.followUser);
 
-module.exports = router
+module.exports = router;
