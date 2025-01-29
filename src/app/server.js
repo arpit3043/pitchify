@@ -2,6 +2,7 @@ const express = require("express");
 const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 const cors = require('cors');
+const session = require("express-session");
 
 const postRoutes=require("../modules/activityFeed/routes/postRoutes.js")
 // Load env vars - move this to top
@@ -17,7 +18,22 @@ const port = process.env.PORT || 8000;
 connectToDB();
 const app = express();
 
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "supersecretkey",
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+      secure: process.env.NODE_ENV === "production", // Set true in production (HTTPS required)
+      httpOnly: true,
+      sameSite: "lax", // Adjust for frontend/backend communication
+    },
+  })
+);
+
 app.use(passport.initialize());
+app.use(passport.session());
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());

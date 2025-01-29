@@ -138,7 +138,23 @@ const registerUser = async (req, res, next) => {
 }   
 
 // Google OAuth Routes
+// Route - /api/auth/google?redirect=/xyz
+
+/*
+
+for frontend 
+const loginWithGoogle = () => {
+  const currentURL = window.location.pathname;
+  window.location.href = `/api/auth/google/login?redirect=${encodeURIComponent(currentURL)}`;
+};
+
+*/
+
 const googleOAuthLogin = async (req, res, next) => {
+  const redirectTo = req.query.redirect || "/"; // Default to home page if no redirect is provided
+
+  // Store the redirect URL in the session
+  req.session.redirectTo = redirectTo;
   passport.authenticate("google", { scope: ["profile", "email"] })(
     req,
     res,
@@ -168,13 +184,13 @@ const googleOAuthCallback = async (req, res, next) => {
         };
 
         const { password: _, ...userWithoutPassword } = user.toObject();
+        
+        // Get redirect URL from session
+        const redirectTo = req.session.redirectTo || "/";
 
-        res.status(200).cookie("token", token, options).json({
-          success: true,
-          message: "Google OAuth successful",
-          token,
-          user: userWithoutPassword,
-        });
+        // Clear session variable
+        delete req.session.redirectTo;
+        res.status(200).cookie("token", token, options).redirect(redirectTo);
       } catch (error) {
         res.status(500).json({
           success: false,
