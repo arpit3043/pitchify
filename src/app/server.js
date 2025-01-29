@@ -3,6 +3,8 @@ const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 const cors = require('cors');
 const session = require("express-session");
+const lusca = require("lusca");
+
 
 const postRoutes=require("../modules/activityFeed/routes/postRoutes.js")
 // Load env vars - move this to top
@@ -30,6 +32,7 @@ app.use(
     },
   })
 );
+app.use(lusca.csrf());
 
 app.use(passport.initialize());
 app.use(passport.session());
