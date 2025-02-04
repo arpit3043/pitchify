@@ -190,7 +190,10 @@ const googleOAuthCallback = async (req, res, next) => {
 
         // Clear session variable
         delete req.session.redirectTo;
-        res.status(200).cookie("token", token, options).redirect(redirectTo);
+        res
+          .status(200)
+          .cookie("token", token, options)
+          .redirect(process.env.FRONTEND_URL + redirectTo);
       } catch (error) {
         res.status(500).json({
           success: false,
