@@ -4,6 +4,13 @@ const jwt = require("jsonwebtoken");
 
 const userSchema = mongoose.Schema(
   {
+    googleId: {
+      type: String,
+      unique: true,
+      required: function () {
+        return this.googleId;
+      },
+    },
     name: {
       type: String,
       required: true,
@@ -15,13 +22,15 @@ const userSchema = mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
-      select: false
+      required: function () {
+        return !this.googleId;
+      },
+      select: false,
     },
+
     role: {
       type: String,
       enum: ["founder", "investor"],
-      
     },
     posts: [
       {
