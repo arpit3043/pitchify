@@ -8,7 +8,11 @@ PORT=5000
 
 NODE_ENV=development
 
-MONGO_URI=<your mongodb connection string>
+FRONTEND_URL=http://localhost:5173
+
+DB_USERNAME = <db_username>
+
+DB_PASSWORD = <db_password>
 
 SECRET_KEY=<enter any text>
 
