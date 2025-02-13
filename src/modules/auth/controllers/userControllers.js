@@ -1,5 +1,6 @@
+const passport = require("passport");
 const { User } = require("../models/userModel");
-const {validateUserCredentials} = require("../../../utils/validations"); 
+const { validateUserCredentials } = require("../../../utils/validations");
 
 const loginUser = async (req, res) => {
     try {
@@ -38,15 +39,13 @@ const loginUser = async (req, res) => {
         sameSite: 'strict',
         expires: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)
       };
-  
-      // Remove password from response
-      user.password = undefined;
-  
+      const { password: _, ...userWithOutPassword } = user.toObject();
+
       res.status(200).cookie("token", token, options).json({
         success: true,
         message: "Logged in successfully",
         token,
-        user
+        user: userWithOutPassword,
       });
     } catch (error) {
       res.status(500).json({
@@ -142,187 +141,78 @@ const registerUser = async (req, res, next) => {
         });
     }
 }   
-// View user profile
-const viewUser = async (req, res) => {
-  try {
-    const { id } = req.params;
-    if (!id) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Please provide an user ID" });
-    }
-    if (mongoose.Types.ObjectId.isValid(id)) {
-      const isUserExist = await User.findById(id);
-      if (!isUserExist) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Invalid user ID" });
+
+// Google OAuth Routes
+// Route - /api/auth/google?redirect=/xyz
+
+/*
+
+for frontend 
+const loginWithGoogle = () => {
+  const currentURL = window.location.pathname;
+  window.location.href = `/api/auth/google/login?redirect=${encodeURIComponent(currentURL)}`;
+};
+
+*/
+
+const googleOAuthLogin = async (req, res, next) => {
+  const redirectTo = req.query.redirect || "/"; // Default to home page if no redirect is provided
+
+  // Store the redirect URL in the session
+  req.session.redirectTo = redirectTo;
+  passport.authenticate("google", { scope: ["profile", "email"] })(
+    req,
+    res,
+    next
+  );
+};
+
+const googleOAuthCallback = async (req, res, next) => {
+  passport.authenticate(
+    "google",
+    { failureRedirect: "/login", session: false },
+    async (err, user) => {
+      try {
+        if (err || !user) {
+          return res.status(401).json({
+            success: false,
+            message: "Authentication failed",
+          });
+        }
+
+        const token = await user.generateToken();
+        const options = {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "strict",
+          expires: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
+        };
+
+        const { password: _, ...userWithoutPassword } = user.toObject();
+        
+        // Get redirect URL from session
+        const redirectTo = req.session.redirectTo || "/";
+
+        // Clear session variable
+        delete req.session.redirectTo;
+        res
+          .status(200)
+          .cookie("token", token, options)
+          .redirect(process.env.FRONTEND_URL + redirectTo);
+      } catch (error) {
+        res.status(500).json({
+          success: false,
+          message: error.message,
+        });
       }
-    } else {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid user ID" });
     }
-    const user = await User.findById(id);
-    if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
-    }
-
-    res.status(200).json({ success: true, message: user });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: err.message });
-  }
+  )(req, res, next);
 };
 
-// Follow User
-const followUser = async (req, res) => {
-  try {
-    const loggedInUser = req.user;
-    const { id } = req.params;
-    if (!loggedInUser) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized. Please log in again.",
-      });
-    }
-
-    if (!id) {
-      return res.status(400).json({
-        success: false,
-        message: "Please provide a user ID.",
-      });
-    }
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid user ID.",
-      });
-    }
-
-    const targetUser = await User.findById(id);
-    if (!targetUser) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found.",
-      });
-    }
-
-    if (loggedInUser._id.equals(id)) {
-      return res.status(400).json({
-        success: false,
-        message: "You Could not follow yourself",
-      });
-    }
-
-    const isFollowing = loggedInUser.following.some((userId) =>
-      userId.equals(id)
-    );
-
-    if (isFollowing) {
-      return res.status(400).json({
-        success: false,
-        message: `You are already Following ${
-          targetUser.name[0].toUpperCase() + targetUser.name.slice(1)
-        }`,
-      });
-    }
-    loggedInUser.following.unshift(id);
-    targetUser.followers.unshift(loggedInUser._id);
-    await loggedInUser.save();
-    await targetUser.save();
-
-    return res.status(200).json({
-      success: true,
-      message: `You are Following ${
-        targetUser.name[0].toUpperCase() + targetUser.name.slice(1)
-      }`,
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: err.message });
-  }
+module.exports = {
+  loginUser,
+  logoutUser,
+  registerUser,
+  googleOAuthLogin,
+  googleOAuthCallback,
 };
-
-// Unfollow User
-const unfollowUser = async (req, res) => {
-  try {
-    const loggedInUser = req.user;
-    const { id } = req.params;
-
-    if (!loggedInUser) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized. Please log in again.",
-      });
-    }
-
-    if (!id) {
-      return res.status(400).json({
-        success: false,
-        message: "Please provide a user ID.",
-      });
-    }
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid user ID.",
-      });
-    }
-
-    const targetUser = await User.findById(id);
-    if (!targetUser) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found.",
-      });
-    }
-
-    if (loggedInUser._id.equals(id)) {
-      return res.status(400).json({
-        success: false,
-        message: "You cannot unfollow yourself.",
-      });
-    }
-
-    const isFollowing = loggedInUser.following.some((userId) =>
-      userId.equals(id)
-    );
-    if (!isFollowing) {
-      return res.status(400).json({
-        success: false,
-        message: `You are not following ${targetUser.name}.`,
-      });
-    }
-
-    loggedInUser.following = loggedInUser.following.filter(
-      (userId) => !userId.equals(id)
-    );
-
-    targetUser.followers = targetUser.followers.filter(
-      (userId) => !userId.equals(loggedInUser._id)
-    );
-
-    await loggedInUser.save();
-    await targetUser.save();
-
-    return res.status(200).json({
-      success: true,
-      message: `You have unfollowed ${targetUser.name}.`,
-    });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({
-      success: false,
-      message: "An error occurred while trying to unfollow the user.",
-      error: err.message,
-    });
-  }
-};
-  module.exports = {loginUser , logoutUser , registerUser , viewUser, followUser, unfollowUser}
-
-  

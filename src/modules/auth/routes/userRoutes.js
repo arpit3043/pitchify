@@ -1,20 +1,28 @@
 const express = require("express");
-const { loginUser, logoutUser, registerUser, viewUser, followUser, unfollowUser } = require("../controllers/userControllers");
+const RateLimit = require("express-rate-limit");
+const {
+  loginUser,
+  logoutUser,
+  registerUser,
+  googleOAuthLogin,
+  googleOAuthCallback,
+} = require("../controllers/userControllers");
 const { isAuthenticated } = require("../../../middlewares/auth");
 
 const router = express.Router();
 
+const limiter = RateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 50,
+});
+
 // Public routes
-router.post("/register", registerUser);
-router.post("/login", loginUser);
+router.post("/register", limiter, registerUser);
+router.post("/login", limiter, loginUser);
+router.get("/google", limiter, googleOAuthLogin);
+router.get("/google/callback", limiter, googleOAuthCallback);
 
 // Protected routes
-router.post("/logout", isAuthenticated, logoutUser);
-router.get("/:id", isAuthenticated , viewUser)
-router.post("/:id/follow",isAuthenticated, followUser);
-router.post("/:id/unfollow", isAuthenticated, unfollowUser);
+router.get("/logout", limiter, isAuthenticated, logoutUser);
 
 module.exports = router;
-
-
-
