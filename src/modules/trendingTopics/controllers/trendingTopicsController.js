@@ -1,7 +1,7 @@
-import NodeCache from "node-cache";
-import cron from "node-cron";
-import { cleanUpTrendingTopics } from "../../../utils/trendingTopicsHelper.js";
-import { TrendingTopic } from "../models/trendingTopicsModel.js";
+const NodeCache = require("node-cache");
+const cron = require("node-cron");
+const { cleanUpTrendingTopics } = require("../../../utils/trendingTopicsHelper.js");
+const { TrendingTopic } = require("../models/trendingTopicsModel.js");
 
 // Initialize cache with a default TTL (Time to Live) of 1 hour (3600 seconds)
 // 1 hour cache expiration
@@ -20,7 +20,7 @@ cron.schedule("0 * * * *", async () => {
 });
 
 // Define the /trending route
-export const trending = async (req, res) => {
+const trending = async (req, res) => {
   try {
     // Check if the trending data is cached
     const cachedTrending = cache.get("trendingData");
@@ -57,3 +57,5 @@ export const trending = async (req, res) => {
     });
   }
 };
+
+module.exports = { trending };
