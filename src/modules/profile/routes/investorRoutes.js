@@ -1,15 +1,24 @@
-// const express = require("express");
-// const investorController = require("../controllers/investorController");
-// const { isAuthenticated } = require("../../../middlewares/auth");
+const express = require("express");
+const investorControllers = require("../controllers/investorControllers");
+const { isAuthenticated } = require("../../../middlewares/auth");
 
-// const router = express.Router();
+const router = express.Router();
 
-// // router.route("/login").post(loginUser);
+console.log("investorRoutes");
+// Protected routes
+router.use(isAuthenticated); // Apply authentication to all routes below
+// Create investor profile
+router.post("/", investorControllers.registerInvestor);
 
-// router.route("/register").post(investorController.registerInvestor);
-// router.route("/login").post(investorController.loginInvestor);
-// router.route("/logout").post(investorController.logoutInvestor);
+// Update investor profile
+router.put("/:id", investorControllers.updateInvestorProfile);
 
-// // router.route("/follow/:id").post(isAuthenticated, founderController.followUser);
+// Delete investor profile
+router.delete("/:id", investorControllers.deleteInvestorProfile);
 
-// module.exports = router;
+// Get investor profile
+router.get("/:id", investorControllers.getInvestorProfile);
+
+// router.route("/follow/:id").post(isAuthenticated, founderController.followUser);
+
+module.exports = router

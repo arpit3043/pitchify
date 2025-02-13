@@ -112,9 +112,11 @@ const registerUser = async (req, res, next) => {
         user = await User.create({
           name,
           email,
-          password
+          password,
+          role : "enthusiast"
         });
-        
+        await user.save();
+
         const token = await user.generateToken();
     
         const options = {
@@ -123,11 +125,14 @@ const registerUser = async (req, res, next) => {
             sameSite: 'strict',
             expires: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)
         };
+        const userResponse = user.toObject();
+        delete userResponse.password;
+    
         res.status(201).cookie("token", token, options).json({
           success: true,
           message: "User registered successfully",
           token,
-          user
+          user: userResponse
         });
       } catch (error) {
         res.status(500).json({

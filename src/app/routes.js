@@ -11,11 +11,10 @@ const router = express.Router();
 router.use("/profile", profileRoutes);
 router.use("/trending", trendingTopicsRoutes);
 
-// Auth routes (public)
-router.use("/auth", userRoutes);
-
-// Protected routes
+router.use("/users", userRoutes);
+router.use("/trending", trendingTopicsRoutes);
 router.use("/founders", founderRoutes);
+router.use("/investors", investorRoutes);
 router.use("/posts", postRoutes);
 
 

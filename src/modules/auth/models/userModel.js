@@ -31,6 +31,7 @@ const userSchema = mongoose.Schema(
     role: {
       type: String,
       enum: ["founder", "investor"],
+      
     },
     posts: [
       {
@@ -63,9 +64,14 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
+
 // generating the token to be saved on the client
 userSchema.methods.generateToken = async function () {
-  return jwt.sign({ id: this._id }, process.env.SECRET_KEY);
+  const payload = {
+    id: this._id,      
+    role: this.role,
+  };
+  return jwt.sign(payload, process.env.SECRET_KEY);
 };
 
 userSchema.methods.matchPassword = async function (enteredPassword) {

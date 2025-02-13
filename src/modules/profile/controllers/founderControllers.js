@@ -31,8 +31,28 @@ const registerFounder = async (req, res) => {
       req.user._id,
       { role: "founder" }
     );
-    console.log(req.body);
+    const updatedUser = await User.findById(req.user.id);
+    const newToken = updatedUser.generateToken();
     
+    // Upload files to Cloudinary
+    let pitchDeck, productDemos, multimedia;
+    try {
+      pitchDeck = req.files.pitchDeck ? await cloudinary.uploader.upload(req.files.pitchDeck[0].path) : null;
+      productDemos = req.files.productDemos ? await Promise.all(req.files.productDemos.map(file => cloudinary.uploader.upload(file.path))) : [];
+      multimedia = req.files.multimedia ? await Promise.all(req.files.multimedia.map(file => cloudinary.uploader.upload(file.path))) : [];
+    } catch (uploadError) {
+      return res.status(500).json({
+        success: false,
+        message: "File upload failed",
+        error: uploadError.message
+      });
+    }
+    const options = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      expires: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)
+    };
     // Initialize with proper structure for file uploads
     const founderProfile = await Founder.create({
       userId: req.user._id,
@@ -41,17 +61,18 @@ const registerFounder = async (req, res) => {
       traction,
       fundingNeeds,
       projectPortfolio: {
-        pitchDeck: null,
-        productDemos: [],
-        multimedia: []
+        pitchDeck: pitchDeck ? { url: pitchDeck.secure_url, publicId: pitchDeck.public_id, fileType: pitchDeck.format } : null,
+        productDemos: productDemos.map(demo => ({ url: demo.secure_url, publicId: demo.public_id, fileType: demo.format })),
+        multimedia: multimedia.map(media => ({ url: media.secure_url, publicId: media.public_id, fileType: media.format }))
       }
     });
     
-    res.status(201).json({
-      success: true,
-      message: "Founder profile created successfully",
-      founder: founderProfile
-    });
+    res.status(201).cookie("token", newToken, options).json({
+        success: true,
+        message: "Founder profile created successfully",
+        token: newToken,
+        founder: founderProfile
+      });
 
   } catch (error) {
     res.status(500).json({
@@ -133,12 +154,12 @@ const getFounderProfile = async (req, res) => {
       traction: founder.traction,
       fundingNeeds: founder.fundingNeeds,
       projectPortfolio: founder.projectPortfolio,
+      location: founder.location,
+      industry: founder.industry,
       milestoneTracker: founder.milestoneTracker,
       userId: founder.userId._id,
       userName: founder.userId.name,
-      userEmail: founder.userId.email,
-      createdAt: founder.createdAt,
-      updatedAt: founder.updatedAt
+      userEmail: founder.userId.email
     };
 
     res.status(200).json({
