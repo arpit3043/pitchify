@@ -31,7 +31,8 @@ const registerFounder = async (req, res) => {
       req.user._id,
       { role: "founder" }
     );
-
+    const updatedUser = await User.findById(req.user.id);
+    const newToken = updatedUser.generateToken();
     
     // Upload files to Cloudinary
     let pitchDeck, productDemos, multimedia;
@@ -46,7 +47,12 @@ const registerFounder = async (req, res) => {
         error: uploadError.message
       });
     }
-
+    const options = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      expires: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)
+    };
     // Initialize with proper structure for file uploads
     const founderProfile = await Founder.create({
       userId: req.user._id,
@@ -61,11 +67,12 @@ const registerFounder = async (req, res) => {
       }
     });
     
-    res.status(201).json({
-      success: true,
-      message: "Founder profile created successfully",
-      founder: founderProfile
-    });
+    res.status(201).cookie("token", newToken, options).json({
+        success: true,
+        message: "Founder profile created successfully",
+        token: newToken,
+        founder: founderProfile
+      });
 
   } catch (error) {
     res.status(500).json({

@@ -32,6 +32,8 @@ const registerInvestor = async (req, res) => {
       req.user._id,
       { role: "investor" }
     );
+    const UpdatedInvestor = User.findById(req.user.id);
+    const newToken = updatedUser.generateToken();
     
     // Initialize with proper structure for file uploads
     const InvestorProfile = await Investor.create({
@@ -46,10 +48,16 @@ const registerInvestor = async (req, res) => {
       geographicalFocus,
       porfolio
     });
-    
-    res.status(201).json({
+    const options = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      expires: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)
+    };
+    res.status(201).cookie("token", newToken, options).json({
       success: true,
       message: "Investor profile created successfully",
+      token: newToken,
       investor: InvestorProfile
     });
 
