@@ -30,4 +30,4 @@ GOOGLE_CLIENT_ID=your_google_OAuth_client_id
 
 GOOGLE_CLIENT_SECRET=your_google_OAuth_client_secret
 
-GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/google/callback
+GOOGLE_CALLBACK_URL=http://localhost:5000/api/users/google/callback
