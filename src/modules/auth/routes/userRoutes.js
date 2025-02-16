@@ -6,6 +6,7 @@ const {
   registerUser,
   googleOAuthLogin,
   googleOAuthCallback,
+  userData,
 } = require("../controllers/userControllers");
 const { isAuthenticated } = require("../../../middlewares/auth");
 
@@ -17,6 +18,7 @@ const limiter = RateLimit({
 });
 
 // Public routes
+router.get("/", userData);
 router.post("/register", limiter, registerUser);
 router.post("/login", limiter, loginUser);
 router.get("/google", limiter, googleOAuthLogin);

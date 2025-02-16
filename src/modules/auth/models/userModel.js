@@ -30,8 +30,7 @@ const userSchema = mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["founder", "investor"],
-      
+      enum: ["founder", "investor", "enthusiast"],
     },
     posts: [
       {

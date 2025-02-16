@@ -1,6 +1,36 @@
 const passport = require("passport");
 const { User } = require("../models/userModel");
+const jwt = require("jsonwebtoken");
 const { validateUserCredentials } = require("../../../utils/validations");
+
+
+const userData = async (req, res) => {
+  try {
+    const { token } = req.cookies;
+
+    if (!token) {
+      return res
+        .status(401)
+        .json({ success: false, message: "No token found" });
+    }
+
+    const decoded = jwt.verify(token, process.env.SECRET_KEY);
+    console.log("Decoded Token:", decoded); // Log decoded data
+
+    const user = await User.findById(decoded.id).select("-password");
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    res.json({ success: true, user });
+  } catch (error) {
+    console.error("JWT Error:", error.message); // Log JWT error
+    res.status(401).json({ success: false, message: "Invalid token" });
+  }
+};
+
 
 const loginUser = async (req, res) => {
     try {
@@ -210,6 +240,7 @@ const googleOAuthCallback = async (req, res, next) => {
 };
 
 module.exports = {
+  userData,
   loginUser,
   logoutUser,
   registerUser,
