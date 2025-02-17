@@ -27,26 +27,53 @@ const userSchema = mongoose.Schema(
       },
       select: false,
     },
-
     role: {
       type: String,
       enum: ["founder", "investor", "enthusiast"],
     },
+    title: {
+      type: String,
+    },
+    about: {
+      type: String,
+    },
+    socialLinks:{
+      twitter : {
+        type:String,
+      },
+      linkedin : {
+        type:String,
+      },
+      github : {
+        type:String,
+      },
+      website : {
+        type:String,
+      },
+    },
+    profileImg: {
+      type:String,
+      default:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQOtu74pEiq7ofeQeTsco0migV16zZoBwSlGg&s"
+    },
+    coverImg:{
+      type:String,
+      default:"https://images.unsplash.com/photo-1579547945413-497e1b99dac0?auto=format&fit=crop&w=2000"
+    },
     posts: [
       {
-        type: mongoose.Schema.Types.ObjectId,
+        type: String,
         ref: "Post",
       },
     ],
     following: [
       {
-        type: mongoose.Schema.Types.ObjectId,
+        type: String,
         ref: "User",
       },
     ],
     followers: [
       {
-        type: mongoose.Schema.Types.ObjectId,
+        type: String,
         ref: "User",
       },
     ],
@@ -63,11 +90,10 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
-
 // generating the token to be saved on the client
 userSchema.methods.generateToken = async function () {
   const payload = {
-    id: this._id,      
+    id: this._id,
     role: this.role,
   };
   return jwt.sign(payload, process.env.SECRET_KEY);

@@ -2,26 +2,40 @@ const { Post } = require("../models/postModel");
 const { User } = require("../../auth/models/userModel");
 const { Comment } = require("../models/commentModel");
 const cloudinary = require("../../../utils/cloudinary");
-const { extractHashtags, updateTrendingTopics, handlePostDeletion, handlePostUpdate} = require("../../../utils/trendingTopicsHelper");
+const {
+  extractHashtags,
+  updateTrendingTopics,
+  handlePostDeletion,
+  handlePostUpdate,
+} = require("../../../utils/trendingTopicsHelper");
 
 /*
 Route to create a post along with file upload if any.
 */
 const createPost = async (req, res) => {
   try {
-    const author = req.user._id;
+    const author = req.user?.id; // Ensure req.user exists
+    if (!author) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Unauthorized. Please log in." });
+    }
+
     const { content } = req.body;
     const hashtags = extractHashtags(content);
+
     const user = await User.findById(author);
+
     if (!user) {
       return res
         .status(404)
-        .json({ success: false, message: "User Not Found.Login Again!" });
+        .json({ success: false, message: "User Not Found. Login Again!" });
     }
 
-    //first we upload the media to cloudinary for fetching the urls(cloudinary)
+    // Upload media to Cloudinary
     const mediaUrls = [];
-    if (req.files && req.file.length > 0) {
+    if (req.files && req.files.length > 0) {
+      ("req.files.length");
       for (const file of req.files) {
         const result = await cloudinary.uploader.upload(file.path, {
           folder: "posts_media",
@@ -30,20 +44,24 @@ const createPost = async (req, res) => {
         mediaUrls.push(result.secure_url);
       }
     }
-    //create a new Post
-    // const newPost = await Post.create(newPostData); not using this just for clarity
+
+    // Create a new post
     const newPost = new Post({
       author,
       content,
       media: mediaUrls,
       hashtags,
     });
+
     await newPost.save();
-    //add post id to the user object who created the post (ordering: latest first)
+
+    if (!user.posts) {
+      user.posts = [];
+    }
     user.posts.unshift(newPost._id);
     await user.save();
 
-    // Update the trending topics with hashtags
+    // Update trending hashtags
     for (const hashtag of hashtags) {
       await updateTrendingTopics(hashtag, newPost._id);
     }
@@ -54,10 +72,11 @@ const createPost = async (req, res) => {
       post: newPost,
     });
   } catch (error) {
-    console.log(error.message);
+    console.error("Create Post Error:", error);
     res.status(500).json({
       success: false,
-      message: error.stack,
+      message: "Internal Server Error",
+      error: error.message,
     });
   }
 };
@@ -71,41 +90,28 @@ const fetchAllPost = async (req, res, next) => {
     const { page = 1, limit = 10 } = req.query;
     const userId = req.user.id;
 
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User Not Found",
-      });
-    }
-    const following = user.following || [];
-    //temp logic get the recent posts for all the users this user follows
-    const postPromise = following.map(async (followingId) => {
-      const followingUser = await User.findById(followingId);
-      if (followingUser && followingUser.posts.length > 0) {
-        const latestPost = followingUser.posts[0];
-        const post = await Post.findById(latestPost);
-        return post;
-      }
-      return null;
-    });
+    // Fetch all posts except those created by the requesting user
+    const totalPosts = await Post.countDocuments({ author: { $ne: userId } });
 
-    const posts = await Promise.all(postPromise);
-    //filtering out all the post=>null if any
-    const validPosts = posts.filter((post) => post !== null);
-    const startIndex = (page - 1) * limit;
-    const endIndex = page * limit;
-    const paginatedPosts = validPosts.slice(startIndex, endIndex);
+    const posts = await Post.find({ author: { $ne: userId } })
+      .populate("author", "name role")
+      .populate("likes", "name role")
+      .populate("comments.user", "name role")
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
+
     return res.status(200).json({
       success: true,
-      posts: paginatedPosts,
+      posts,
       pagination: {
         currentPage: page,
-        totalPosts: validPosts.length,
-        totalPages: Math.ceil(validPosts.length / limit),
+        totalPosts,
+        totalPages: Math.ceil(totalPosts / limit),
       },
     });
   } catch (error) {
+    console.error("Error fetching posts:", error);
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
@@ -115,7 +121,10 @@ Route to fetch a user post for a provided post id.
 */
 const fetchPostById = async (req, res, next) => {
   try {
-    const post = await Post.findById(req.params.id);
+    const post = await Post.findById(req.params.id)
+      .populate("author", "name role")
+      .populate("likes", "name role")
+      .populate("comments.user", "name role timestamps");
     if (!post) {
       return res
         .status(404)
@@ -261,53 +270,57 @@ const updatePostCaption = async (req, res, next) => {
 const commentOnPost = async (req, res, next) => {
   try {
     const { postId } = req.params;
-    const userId = req.user._id;
-
-    const post = await Post.findById(postId);
-    if (!post) {
-      return res.status(404).json({
-        success: false,
-        message: "post not found",
-      });
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
+    const userId = req.user.id;
     const { content } = req.body;
-    if (!content) {
-      return res.status(404).json({
-        success: false,
-        message: "Comment cannot be empty",
-      });
+
+    // Validate input
+    if (!content || typeof content !== "string" || content.trim() === "") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Comment cannot be empty" });
     }
 
-    const newCommentData = {
-      content,
+    // Find the post
+    const post = await Post.findById(postId)
+      .populate("comments.user", "name avatar role")
+      .populate("author", "name avatar role"); 
+    if (!post)
+      return res
+        .status(404)
+        .json({ success: false, message: "Post not found" });
+
+    // Find the user
+    const user = await User.findById(userId);
+    if (!user)
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+
+    // ✅ Create the comment and save it separately
+    const newComment = new Comment({
       postId,
-      owner: userId,
-    };
+      user: userId, // Store reference to the user
+      comment: content,
+    })
 
-    const comment = await Comment.create(newCommentData);
+    await newComment.save(); // Save to database
 
-    post.comments.push(comment._id);
+    // ✅ Push only the Comment's ID to post.comments
+    post.comments.push({ user: userId, comment: content });
 
     await post.save();
 
     return res.status(200).json({
       success: true,
-      message: "Comment added",
-      comment,
+      message: "Comment added successfully",
+      comment: newComment,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    console.error("Error adding comment:", error);
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 // Deletes a comment from a post
 // Validates:
@@ -461,12 +474,12 @@ const getPostComments = async (req, res, next) => {
     if (!post) {
       return res.status(404).json({
         success: false,
-        message: "Post not found"
+        message: "Post not found",
       });
     }
 
     const comments = await Comment.find({ postId })
-      .populate('owner', 'name') // Populate author details (e.g., name)
+      .populate("user", "name avatar role") // Populate author details (e.g., name)
       .sort({ createdAt: -1 }) // Sort comments by creation date in descending order
       .skip(skip) // Skip the first 'skip' comments
       .limit(limit); // Limit the number of comments to 'limit'
@@ -483,14 +496,14 @@ const getPostComments = async (req, res, next) => {
           totalPages,
           totalComments,
           hasNextPage: page < totalPages,
-          hasPrevPage: page > 1
-        }
-      }
+          hasPrevPage: page > 1,
+        },
+      },
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -515,7 +528,7 @@ const likeComment = async (req, res, next) => {
     if (!post) {
       return res.status(404).json({
         success: false,
-        message: "Post not found"
+        message: "Post not found",
       });
     }
 
@@ -524,7 +537,7 @@ const likeComment = async (req, res, next) => {
     if (!comment) {
       return res.status(404).json({
         success: false,
-        message: "Comment not found"
+        message: "Comment not found",
       });
     }
 
@@ -532,13 +545,13 @@ const likeComment = async (req, res, next) => {
     if (!comment.postId.equals(postId)) {
       return res.status(400).json({
         success: false,
-        message: "Comment does not belong to this post"
+        message: "Comment does not belong to this post",
       });
     }
 
     // Check if user has already liked the comment
-    const likeIndex = comment.likes.findIndex(like => 
-      like.user.toString() === userId.toString()
+    const likeIndex = comment.likes.findIndex(
+      (like) => like.user.toString() === userId.toString()
     );
 
     if (likeIndex !== -1) {
@@ -549,14 +562,14 @@ const likeComment = async (req, res, next) => {
       return res.status(200).json({
         success: true,
         message: "Comment unliked successfully",
-        likes: comment.likes.length
+        likes: comment.likes.length,
       });
     }
 
     // Add new like
     comment.likes.push({
       user: userId,
-      likedAt: new Date()
+      likedAt: new Date(),
     });
 
     await comment.save();
@@ -564,12 +577,12 @@ const likeComment = async (req, res, next) => {
     return res.status(200).json({
       success: true,
       message: "Comment liked successfully",
-      likes: comment.likes.length
+      likes: comment.likes.length,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };

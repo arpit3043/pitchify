@@ -8,55 +8,61 @@ const commentSchema = new mongoose.Schema({
   // Links comment to specific post
   postId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Post',
-    required: true
+    ref: "Post",
+    required: true,
   },
-  
+
   // Comment author reference
-  owner: {
+  user: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User', // Refers to the user who made the comment
-    required: true
+    ref: "User", // Refers to the user who made the comment
+    required: true,
   },
-  
+
   // Main comment text
-  content: {
+  comment: {
     type: String,
     required: true,
-    trim: true  // Removes whitespace from both ends
+    trim: true, // Removes whitespace from both ends
   },
-  likes: [{
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    likedAt: { type: Date, default: Date.now }
-  }],
-  
+  likes: [
+    {
+      user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      likedAt: { type: Date, default: Date.now },
+    },
+  ],
+
   // Nested replies structure
   // Allows for threaded conversations under comments
   replies: [
     {
-      author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+      author: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+      },
       content: { type: String, required: true, trim: true },
       createdAt: { type: Date, default: Date.now },
-      updatedAt: { type: Date }
-    }
+      updatedAt: { type: Date },
+      likes: [
+        {
+          user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+          likedAt: { type: Date, default: Date.now },
+        },
+      ],
+    },
   ],
-  
+
   // Tracks users who liked the comment and when
-  likes: [
-    {
-      user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-      likedAt: { type: Date, default: Date.now }
-    }
-  ],
-  
+
   // Timestamp tracking
   createdAt: {
     type: Date,
-    default: Date.now
+    default: Date.now,
   },
   updatedAt: {
-    type: Date
-  }
+    type: Date,
+  },
 });
 
 // Create and export the Comment model
