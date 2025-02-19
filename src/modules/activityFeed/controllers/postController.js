@@ -94,9 +94,12 @@ const fetchAllPost = async (req, res, next) => {
     const totalPosts = await Post.countDocuments({ author: { $ne: userId } });
 
     const posts = await Post.find({ author: { $ne: userId } })
-      .populate("author", "name role")
-      .populate("likes", "name role")
-      .populate("comments.user", "name role")
+      .populate("author", "name title profileImg userType createdAt updatedAt")
+      .populate("likes", "name title profileImg userType likedAt")
+      .populate(
+        "comments.user",
+        "name title profileImg userType createdAt updatedAt"
+      )
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(parseInt(limit));
@@ -122,9 +125,12 @@ Route to fetch a user post for a provided post id.
 const fetchPostById = async (req, res, next) => {
   try {
     const post = await Post.findById(req.params.id)
-      .populate("author", "name role")
-      .populate("likes", "name role")
-      .populate("comments.user", "name role timestamps");
+      .populate("author", "name title profileImg userType createdAt updatedAt")
+      .populate("likes", "name title profileImg userType likedAt")
+      .populate(
+        "comments.user",
+        "name title profileImg userType createdAt updatedAt"
+      );
     if (!post) {
       return res
         .status(404)
@@ -271,10 +277,10 @@ const commentOnPost = async (req, res, next) => {
   try {
     const { postId } = req.params;
     const userId = req.user.id;
-    const { content } = req.body;
+    const { comment } = req.body;
 
     // Validate input
-    if (!content || typeof content !== "string" || content.trim() === "") {
+    if (!comment || typeof comment !== "string" || comment.trim() === "") {
       return res
         .status(400)
         .json({ success: false, message: "Comment cannot be empty" });
@@ -282,8 +288,7 @@ const commentOnPost = async (req, res, next) => {
 
     // Find the post
     const post = await Post.findById(postId)
-      .populate("comments.user", "name avatar role")
-      .populate("author", "name avatar role"); 
+      
     if (!post)
       return res
         .status(404)
@@ -300,13 +305,13 @@ const commentOnPost = async (req, res, next) => {
     const newComment = new Comment({
       postId,
       user: userId, // Store reference to the user
-      comment: content,
-    })
+      comment,
+    });
 
     await newComment.save(); // Save to database
 
     // ✅ Push only the Comment's ID to post.comments
-    post.comments.push({ user: userId, comment: content });
+    post.comments.push(userId);
 
     await post.save();
 
@@ -320,7 +325,6 @@ const commentOnPost = async (req, res, next) => {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
-
 
 // Deletes a comment from a post
 // Validates:
@@ -479,7 +483,13 @@ const getPostComments = async (req, res, next) => {
     }
 
     const comments = await Comment.find({ postId })
-      .populate("user", "name avatar role") // Populate author details (e.g., name)
+      .populate("user", "name title profileImg userType createdAt updatedAt")
+      .populate(
+        "replies.author",
+        "name title profileImg userType createdAt updatedAt"
+      )
+
+      // Populate author details (e.g., name)
       .sort({ createdAt: -1 }) // Sort comments by creation date in descending order
       .skip(skip) // Skip the first 'skip' comments
       .limit(limit); // Limit the number of comments to 'limit'
@@ -507,6 +517,67 @@ const getPostComments = async (req, res, next) => {
     });
   }
 };
+
+// Handles comment likes/unlikes
+// Features:
+// 1. Toggles like status (likes/unlikes)
+// 2. Validates post and comment existence
+// 3. Verifies comment belongs to post
+// 4. Tracks like timestamp
+const likePost = async (req, res, next) => {
+  try {
+    const { postId } = req.params;
+    const userId = req.user?.id; // Ensure userId is valid
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required",
+      });
+    }
+
+    // Verify post exists
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: "Post not found",
+      });
+    }
+
+    // Convert userId to string
+    const userIdStr = userId.toString();
+
+    // Check if user already liked the post
+    if (post.likes.includes(userIdStr)) {
+      post.likes = post.likes.filter((id) => id.toString() !== userIdStr);
+      await post.save();
+      return res.status(200).json({
+        success: true,
+        message: "Like removed",
+        likes: post.likes,
+      });
+    }
+
+    // Add like
+    post.likes.push(userIdStr);
+    await post.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Liked successfully",
+      likes: post.likes,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
+
 
 /**
  * Comment Interaction Controller
@@ -587,6 +658,8 @@ const likeComment = async (req, res, next) => {
   }
 };
 
+
+
 module.exports = {
   createPost,
   deletePost,
@@ -598,5 +671,7 @@ module.exports = {
   fetchPostById,
   getPostComments,
   updatePostById,
+  likePost,
   likeComment,
+  addReplyToComment,
 };
