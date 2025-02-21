@@ -658,7 +658,55 @@ const likeComment = async (req, res, next) => {
   }
 };
 
+const addReplyToComment = async (req, res, next) => {
+  try {
+    const { postId, commentId } = req.params;
+    const userId = req.user.id;
+    const { content } = req.body;
 
+    // Validate input
+    if (!content || typeof content !== "string" || content.trim() === "") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Reply content cannot be empty" });
+    }
+
+    // Find the comment
+    const comment = await Comment.findById(commentId);
+    if (!comment) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Comment not found" });
+    }
+
+    // Find the user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    // Create the reply object
+    const newReply = {
+      author: userId, // Store reference to the user
+      content,
+    };
+
+    // Add the reply to the comment's replies array
+    comment.replies.push(newReply);
+    await comment.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Reply added successfully",
+      reply: newReply,
+    });
+  } catch (error) {
+    console.error("Error adding reply:", error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
 
 module.exports = {
   createPost,

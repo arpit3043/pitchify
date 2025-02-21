@@ -34,6 +34,10 @@ router
   .put(isAuthenticated, postController.updateCommentOnPost)
   .delete(isAuthenticated, postController.deleteComment);
 
+router
+  .route("/post/:postId/comments/:commentId/replies")
+  .post(isAuthenticated, postController.addReplyToComment);
+
 
   // Comment Interaction
 // Handles liking/unliking comments
