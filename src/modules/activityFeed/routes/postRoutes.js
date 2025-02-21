@@ -25,11 +25,18 @@ router
   .route("/post/:postId/comments")
   .get(isAuthenticated, postController.getPostComments)
   .post(isAuthenticated, postController.commentOnPost);
+router
+  .route("/post/:postId/like")
+  .post(isAuthenticated, postController.likePost);
 
 router
   .route("/post/:postId/comments/:commentId")
   .put(isAuthenticated, postController.updateCommentOnPost)
   .delete(isAuthenticated, postController.deleteComment);
+
+router
+  .route("/post/:postId/comments/:commentId/replies")
+  .post(isAuthenticated, postController.addReplyToComment);
 
 
   // Comment Interaction
