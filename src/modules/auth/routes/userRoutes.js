@@ -6,7 +6,8 @@ const {
   registerUser,
   googleOAuthLogin,
   googleOAuthCallback,
-  userData,
+  userData, sendConnectionRequest, acceptConnectionRequest, getPendingRequestsForAUser, rejectConnectionRequest,
+  removeConnection,
 } = require("../controllers/userControllers");
 const { isAuthenticated } = require("../../../middlewares/auth");
 
@@ -23,6 +24,11 @@ router.post("/register", limiter, registerUser);
 router.post("/login", limiter, loginUser);
 router.get("/google", limiter, googleOAuthLogin);
 router.get("/google/callback", limiter, googleOAuthCallback);
+router.post('/connection-request', isAuthenticated, sendConnectionRequest);
+router.post("/connection-request/accept", isAuthenticated, acceptConnectionRequest);
+router.post("/connection-request/reject", isAuthenticated, rejectConnectionRequest);
+router.get("/connection-requests/:userId", isAuthenticated, getPendingRequestsForAUser);
+router.delete("/connection", isAuthenticated, removeConnection);
 
 // Protected routes
 router.get("/logout", limiter, isAuthenticated, logoutUser);
