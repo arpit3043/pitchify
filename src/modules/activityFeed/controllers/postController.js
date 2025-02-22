@@ -95,7 +95,6 @@ const fetchAllPost = async (req, res, next) => {
 
     const posts = await Post.find({ author: { $ne: userId } })
       .populate("author", "name title profileImg userType createdAt updatedAt")
-      .populate("likes", "name title profileImg userType likedAt")
       .populate(
         "comments.user",
         "name title profileImg userType createdAt updatedAt"
@@ -126,7 +125,6 @@ const fetchPostById = async (req, res, next) => {
   try {
     const post = await Post.findById(req.params.id)
       .populate("author", "name title profileImg userType createdAt updatedAt")
-      .populate("likes", "name title profileImg userType likedAt")
       .populate(
         "comments.user",
         "name title profileImg userType createdAt updatedAt"
