@@ -91,6 +91,11 @@ const userSchema = new mongoose.Schema(
     following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Post" }],
+      //list of accepted connections
+      connections: [{
+        type: mongoose.Schema.Types.ObjectId,
+          ref: "User"
+      }]
   },
   { timestamps: true }
 );
